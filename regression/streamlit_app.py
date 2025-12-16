@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 import os
@@ -37,7 +39,7 @@ st.sidebar.header("🔧 Hyperparameter Settings")
 # Algorithm selection
 algorithm = st.sidebar.selectbox(
     "Select Algorithm",
-    ["Linear Regression", "Ridge", "Lasso", "ElasticNet", "Compare All"]
+    ["Linear Regression", "Ridge", "Lasso", "ElasticNet", "Polynomial Regression", "Compare All"]
 )
 
 st.sidebar.markdown("---")
@@ -57,6 +59,11 @@ elif algorithm == "ElasticNet":
     l1_ratio = st.sidebar.slider("L1 Ratio (Lasso vs Ridge balance)", 
                                   min_value=0.0, max_value=1.0, value=0.5, step=0.01)
     st.sidebar.info("L1 Ratio = 1: Pure Lasso\nL1 Ratio = 0: Pure Ridge")
+
+elif algorithm == "Polynomial Regression":
+    poly_degree = st.sidebar.slider("Polynomial Degree", 
+                                     min_value=2, max_value=6, value=2, step=1)
+    st.sidebar.info("Degree = 2: Quadratic\nDegree = 3: Cubic\nHigher degrees may overfit")
 
 elif algorithm == "Compare All":
     st.sidebar.subheader("Ridge Settings")
@@ -80,8 +87,12 @@ test_size = st.sidebar.slider("Test Size (%)", min_value=10, max_value=40, value
 random_state = st.sidebar.number_input("Random State", min_value=0, max_value=100, value=42, step=1)
 
 # Prepare data
-X = df[['CGPA']]
-y = df['IQ']
+if algorithm == "Polynomial Regression":
+    X = df[['CGPA']]
+    y = df['Package']
+else:
+    X = df[['CGPA']]
+    y = df['IQ']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=int(random_state))
 
@@ -103,7 +114,75 @@ def train_and_evaluate(model, name):
     }
 
 # Main content area
-if algorithm == "Compare All":
+if algorithm == "Polynomial Regression":
+    # Create polynomial regression model
+    model = make_pipeline(PolynomialFeatures(degree=poly_degree), LinearRegression())
+    
+    # Train and evaluate
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    
+    r2 = r2_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
+    
+    metrics = {
+        'R² Score': r2,
+        'MAE': mae,
+        'MSE': mse,
+        'RMSE': rmse
+    }
+    
+    # Create two columns
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.subheader(f"📈 Polynomial Regression (Degree {poly_degree}) - CGPA vs Package")
+        
+        # Create plot
+        fig, ax = plt.subplots(figsize=(12, 7))
+        
+        # Scatter plot
+        ax.scatter(df['CGPA'], df['Package'], alpha=0.6, c='blue', edgecolors='k', s=60, label='Data points')
+        
+        # Polynomial regression curve
+        x_range = pd.DataFrame(
+            np.linspace(df['CGPA'].min(), df['CGPA'].max(), 300),
+            columns=['CGPA']
+        )
+        y_pred_line = model.predict(x_range)
+        ax.plot(x_range, y_pred_line, color='red', linewidth=3, label=f'Polynomial fit (degree {poly_degree})', alpha=0.9)
+        
+        # Test predictions
+        ax.scatter(X_test, y_test, alpha=0.8, c='orange', edgecolors='k', s=80, 
+                   label='Test data', marker='s')
+        ax.scatter(X_test, y_pred, alpha=0.8, c='green', edgecolors='k', s=80, 
+                   label='Predictions', marker='^')
+        
+        ax.set_xlabel('CGPA', fontsize=13, fontweight='bold')
+        ax.set_ylabel('Package', fontsize=13, fontweight='bold')
+        ax.set_title(f'CGPA vs Package - Polynomial Regression (Degree {poly_degree})', fontsize=15, fontweight='bold')
+        ax.legend(loc='best', fontsize=10)
+        ax.grid(True, alpha=0.3)
+        
+        st.pyplot(fig)
+    
+    with col2:
+        st.subheader("📊 Performance Metrics")
+        
+        st.metric("R² Score (Accuracy)", f"{metrics['R² Score']:.4f}")
+        st.metric("Mean Absolute Error", f"{metrics['MAE']:.4f}")
+        st.metric("Mean Squared Error", f"{metrics['MSE']:.4f}")
+        st.metric("Root Mean Squared Error", f"{metrics['RMSE']:.4f}")
+        
+        # Model info
+        st.markdown("---")
+        st.subheader("🔢 Model Parameters")
+        st.write(f"**Polynomial Degree:** {poly_degree}")
+        st.info(f"**Model Type:**\n\nPolynomial Regression of degree {poly_degree}\n\nThis creates a curve that can capture non-linear relationships between CGPA and Package.")
+
+elif algorithm == "Compare All":
     # Create all models with hyperparameters
     models = {
         'Linear Regression': LinearRegression(),
@@ -195,7 +274,7 @@ else:
         model = Ridge(alpha=alpha_ridge)
     elif algorithm == "Lasso":
         model = Lasso(alpha=alpha_lasso)
-    else:  # ElasticNet
+    elif algorithm == "ElasticNet":
         model = ElasticNet(alpha=alpha_elastic, l1_ratio=l1_ratio)
     
     # Train and evaluate
