@@ -8,12 +8,12 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 import os
 
-st.write("Current files:", os.listdir(BASE_DIR))
 
 
 BASE_DIR = os.path.dirname(__file__)
 df = pd.read_csv(os.path.join(BASE_DIR, "data.csv"))
 
+st.write("Current files:", os.listdir(BASE_DIR))
 
 # Page configuration
 st.set_page_config(page_title="Regression Hyperparameter Tuning", layout="wide")
@@ -270,5 +270,6 @@ with st.expander("📁 Dataset Information"):
 # Footer
 st.markdown("---")
 st.markdown("💡 **Tip:** Adjust the hyperparameters in the sidebar to see how they affect the model's performance!")
+
 
 
