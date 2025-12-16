@@ -8,12 +8,9 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 import os
 
-
-
 BASE_DIR = os.path.dirname(__file__)
 df = pd.read_csv(os.path.join(BASE_DIR, "data.csv"))
 
-st.write("Current files:", os.listdir(BASE_DIR))
 
 # Page configuration
 st.set_page_config(page_title="Regression Hyperparameter Tuning", layout="wide")
@@ -25,7 +22,11 @@ st.markdown("---")
 # Load data
 @st.cache_data
 def load_data():
-    df = pd.read_csv('data.csv')
+    import os
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_path = os.path.join(script_dir, 'data.csv')
+    df = pd.read_csv(csv_path)
     return df
 
 df = load_data()
@@ -270,6 +271,3 @@ with st.expander("📁 Dataset Information"):
 # Footer
 st.markdown("---")
 st.markdown("💡 **Tip:** Adjust the hyperparameters in the sidebar to see how they affect the model's performance!")
-
-
-
