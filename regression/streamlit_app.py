@@ -7,7 +7,6 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
-
 import os
 
 BASE_DIR = os.path.dirname(__file__)
@@ -350,3 +349,4 @@ with st.expander("📁 Dataset Information"):
 # Footer
 st.markdown("---")
 st.markdown("💡 **Tip:** Adjust the hyperparameters in the sidebar to see how they affect the model's performance!")
+
